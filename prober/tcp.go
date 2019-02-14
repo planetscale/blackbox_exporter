@@ -121,10 +121,18 @@ func ProbeTCP(ctx context.Context, target string, module config.Module, registry
 
 	conn, err := dialTCP(ctx, target, module, registry, logger)
 	if err != nil {
+		if module.TCP.ExpectConnectionFail {
+			level.Info(logger).Log("msg", "TCP connection unsuccessfull", "err", err)
+			return true
+		}
 		level.Error(logger).Log("msg", "Error dialing TCP", "err", err)
 		return false
 	}
 	defer conn.Close()
+	if module.TCP.ExpectConnectionFail {
+		level.Error(logger).Log("msg", "connected to port")
+		return false
+	}
 	level.Info(logger).Log("msg", "Successfully dialed")
 
 	// Set a deadline to prevent the following code from blocking forever.
